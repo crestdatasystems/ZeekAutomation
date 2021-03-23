@@ -42,7 +42,7 @@ locals {
 
 module "google_zeek_automation" {
   source                = "./modules/zeek_automation"
-  credentials           = "credentials.json"
+  credentials           = var.credentials
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
   mirror_vpc_network    = "projects/my-project-123/global/networks/test-mirror"
@@ -55,19 +55,12 @@ module "google_zeek_automation" {
   ]
 
 
-  # Add parameter according to mirror sources
-  mirror_vpc_subnets = {
-    "us-west1" = ["projects/my-project-123/regions/us-west1/subnetworks/subnet-01"]
-  }
-
+  # Add mirror-vpc sources(any one): mirror_vpc_subnets | mirror_vpc_tags | mirror_vpc_instances
   mirror_vpc_tags = {
     "us-west1" = ["mirror-http", "mirror-http"]
   }
 
-  mirror_vpc_instances = {
-    "us-west1" = ["projects/my-project-123/zones/us-west1-b/instances/my-instance"]
-  }
-
+  # Optional Parameters
   ip_protocols = ["tcp"] # Protocols that apply as a filter on mirrored traffic. Possible values: ["tcp", "udp", "icmp"]
 
   direction = "BOTH" # Direction of traffic to mirror. Possible values: "INGRESS", "EGRESS", "BOTH"

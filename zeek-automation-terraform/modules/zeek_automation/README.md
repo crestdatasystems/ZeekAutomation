@@ -4,7 +4,7 @@ This module simplifies the deployment of Zeek so GCP customers can feed raw pack
 
 ## Compatibility
 
-This module is meant for use with Terraform 0.14 or above.
+This module is meant for use with Terraform `v0.14.5` or above.
 
 
 ## Usage
@@ -19,7 +19,7 @@ locals {
 module "zeek_automation" {
   source           = "<link>/modules/zeek_automation"
   
-  credentials           = "credentials.json"
+  credentials           = var.credentials
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
 
@@ -41,10 +41,10 @@ module "zeek_automation" {
 ```
 
 Then perform the following commands on the root folder:
-- `terraform init -backend-config='backend.tfvars'` to get the plugins
-- `terraform plan -var-file='backend.tfvars'` to see the infrastructure plan
-- `terraform apply -var-file='backend.tfvars'` to apply the infrastructure build
-- `terraform destroy -var-file='backend.tfvars'` to destroy the built infrastructure
+- `terraform init -backend-config=backend.tfvars` to get the plugins
+- `terraform plan -var-file=backend.tfvars` to see the infrastructure plan
+- `terraform apply -var-file=backend.tfvars` to apply the infrastructure build
+- `terraform destroy -var-file=backend.tfvars` to destroy the built infrastructure
 
 
 ## Requirements
@@ -53,13 +53,14 @@ Before this module can be used on a project, you must ensure that the following 
 1. Terraform is [installed](#software-dependencies) on the machine where Terraform is executed.
 2. The Service Account you execute the module with has the right [permissions](#configure-a-service-account).
 3. The Compute Engine APIs are [active](#enable-apis) on the project you will launch the infrastructure on.
-4. User must create a GCS Bucket and its name should be given as an input to `backend.tfvars` file.
+4. User must create a GCS Bucket and its name should be given as an input to [`backend.tfvars`](../../examples/basic_configuration/backend.tfvars) file.  
+   > Note: While creating GCS Bucket, Access Control of bucket should be `Fine-grained`.   
 
 
 ## Software Dependencies
 
 ### Terraform and Plugins
-- [Terraform](https://www.terraform.io/downloads.html) 0.14
+- [Terraform][terraform-download] v0.14.5
 - [Terraform Provider for GCP][terraform-provider-google] v3.55
 
 
@@ -119,4 +120,5 @@ In order to operate with the Service Account you must activate the following API
 
 
 
+[terraform-download]: https://www.terraform.io/downloads.html
 [terraform-provider-google]: https://github.com/terraform-providers/terraform-provider-google

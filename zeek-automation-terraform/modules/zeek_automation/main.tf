@@ -41,7 +41,7 @@ resource "google_compute_network" "main" {
 
 resource "google_compute_subnetwork" "main" {
   for_each                 = local.collector_vpc_subnets
-  name                     = format("%s-%02d", "poc-subnet", index(var.subnets, each.value) + 1)
+  name                     = format("%s-%02d", "subnet", index(var.subnets, each.value) + 1)
   ip_cidr_range            = each.value.collector_vpc_subnet_cidr
   region                   = each.value.collector_vpc_subnet_region
   private_ip_google_access = var.private_ip_google_access
@@ -77,14 +77,14 @@ resource "google_compute_firewall" "allow_ingress" {
 }
 
 resource "google_compute_firewall" "allow_egress" {
-  name      = "${local.mirror_vpc_network_region}-rule-allow-egress-poc"
+  name      = "${local.mirror_vpc_network_region}-rule-allow-egress"
   network   = local.mirror_vpc_network_region
   direction = "EGRESS"
   allow {
     protocol = "all"
   }
   destination_ranges = local.collector_vpc_subnet_cidr
-  depends_on         = [google_compute_firewall.allow_ingress]
+  depends_on         = [google_compute_subnetwork.main]
 }
 
 # -------------------------------------------------------------- #
@@ -92,16 +92,16 @@ resource "google_compute_firewall" "allow_egress" {
 # -------------------------------------------------------------- #
 
 resource "google_compute_network_peering" "mirror_vpc_network_peering" {
-  name                 = "poc-network-peering-mirror-to-collector"
+  name                 = "network-peering-mirror-to-collector"
   network              = local.mirror_vpc_network_id
   peer_network         = google_compute_network.main.id
   export_custom_routes = var.export_local_custom_routes
   import_custom_routes = var.export_peer_custom_routes
-  depends_on           = [google_compute_firewall.allow_egress]
+  depends_on           = [google_compute_subnetwork.main]
 }
 
 resource "google_compute_network_peering" "collector_vpc_network_peering" {
-  name                 = "poc-network-peering-collector-to-mirror"
+  name                 = "network-peering-collector-to-mirror"
   network              = google_compute_network.main.id
   peer_network         = local.mirror_vpc_network_id
   export_custom_routes = var.export_peer_custom_routes
@@ -116,7 +116,7 @@ resource "google_compute_network_peering" "collector_vpc_network_peering" {
 
 resource "google_compute_instance_template" "main" {
   for_each    = google_compute_subnetwork.main
-  name        = format("%s--%s", "poc-collector-it", element(split("/", each.value.id), 3))
+  name        = format("%s--%s", "collector-it", element(split("/", each.value.id), 3))
   description = var.template_description
   metadata_startup_script = templatefile(
     "${path.module}/files/startup_script.sh",
@@ -156,7 +156,7 @@ resource "google_compute_instance_template" "main" {
 # -------------------------------------------------------------- #
 
 resource "google_compute_health_check" "main" {
-  name                = "poc-http-health-check"
+  name                = "http-health-check"
   description         = "Health check via http"
   timeout_sec         = 5
   check_interval_sec  = 10
@@ -175,9 +175,9 @@ resource "google_compute_health_check" "main" {
 
 resource "google_compute_region_instance_group_manager" "main" {
   for_each           = google_compute_instance_template.main
-  name               = format("%s--%s", "poc-collector-ig", element(split("--", element(split("/", each.value.id), 4)), 1))
+  name               = format("%s--%s", "collector-ig", element(split("--", element(split("/", each.value.id), 4)), 1))
   region             = format("%s", element(split("--", element(split("/", each.value.id), 4)), 1))
-  base_instance_name = "poc-mig-instance"
+  base_instance_name = "mig-instance"
 
   version {
     instance_template = each.value.id
@@ -197,7 +197,7 @@ resource "google_compute_region_instance_group_manager" "main" {
 
 resource "google_compute_region_autoscaler" "main" {
   for_each = google_compute_region_instance_group_manager.main
-  name     = format("%s--%s", "poc-autoscaler", element(split("/", each.value.id), 3))
+  name     = format("%s--%s", "autoscaler", element(split("/", each.value.id), 3))
   region   = format("%s", element(split("/", each.value.id), 3))
   target   = each.value.id
 
@@ -219,7 +219,7 @@ resource "google_compute_region_autoscaler" "main" {
 
 resource "google_compute_region_backend_service" "main" {
   for_each              = google_compute_region_instance_group_manager.main
-  name                  = format("%s--%s", "poc-internal-loadbalancer", element(split("--", element(split("/", each.value.instance_group), 10)), 1))
+  name                  = format("%s--%s", "internal-loadbalancer", element(split("--", element(split("/", each.value.instance_group), 10)), 1))
   region                = format("%s", element(split("/", each.value.instance_group), 8))
   health_checks         = [google_compute_health_check.main.id]
   load_balancing_scheme = "INTERNAL"
@@ -237,7 +237,7 @@ resource "google_compute_region_backend_service" "main" {
 
 resource "google_compute_forwarding_rule" "main" {
   for_each               = google_compute_region_backend_service.main
-  name                   = format("%s--%s", "poc-forwarding-rule", element(split("/", each.value.id), 3))
+  name                   = format("%s--%s", "forwarding-rule", element(split("/", each.value.id), 3))
   region                 = format("%s", element(split("/", each.value.id), 3))
   load_balancing_scheme  = "INTERNAL"
   backend_service        = each.value.id
@@ -255,7 +255,7 @@ resource "google_compute_forwarding_rule" "main" {
 
 resource "google_compute_packet_mirroring" "main" {
   for_each = google_compute_forwarding_rule.main
-  name     = format("%s--%s", "poc-policy-mirror-to-collector", element(split("/", each.value.id), 3))
+  name     = format("%s--%s", "policy-mirror-to-collector", element(split("/", each.value.id), 3))
   region   = format("%s", element(split("/", each.value.id), 3))
 
   network {

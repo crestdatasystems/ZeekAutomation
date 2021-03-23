@@ -42,11 +42,11 @@ locals {
 
 module "google_zeek_automation" {
   source                = "./modules/zeek_automation"
-  credentials           = "credentials.json"
+  credentials           = var.credentials
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
-  mirror_vpc_subnets = {
-    "us-west1" = ["projects/my-project-123/regions/us-west1/subnetworks/subnet-01"]
+  mirror_vpc_instances = {
+    "us-west1" = ["projects/my-project-123/zones/us-west1-b/instances/my-instance"]
   }
   subnets = [
     {
