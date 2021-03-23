@@ -19,7 +19,7 @@ variable "gcp_project" {
 variable "vpc_name" {
   description = "Portion of name to be generated for the VPC network."
   type        = string
-  default     = "poc-collector-vpc"
+  default     = "collector-vpc"
 }
 
 variable "vpc_description" {
@@ -59,7 +59,11 @@ variable "private_ip_google_access" {
 }
 
 variable "subnets" {
-  type        = list(map(string))
+  type = list(object({
+    mirror_vpc_subnet_cidr      = list(string)
+    collector_vpc_subnet_cidr   = string
+    collector_vpc_subnet_region = string
+  }))
   description = "The list of subnets being created"
 }
 

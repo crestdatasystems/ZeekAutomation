@@ -4,7 +4,7 @@ locals {
   mirror_vpc_network_id         = var.mirror_vpc_network
   mirror_vpc_network_project_id = element(split("/", local.mirror_vpc_network_id), 1)
   mirror_vpc_network_region     = element(split("/", local.mirror_vpc_network_id), 4)
-  mirror_vpc_subnet_cidr        = [for subnet in var.subnets : subnet.mirror_vpc_subnet_cidr]
+  mirror_vpc_subnet_cidr        = flatten([for subnet in var.subnets : subnet.mirror_vpc_subnet_cidr])
 
   packet_mirroring_mirror_subnet_sources   = var.mirror_vpc_subnets
   packet_mirroring_mirror_tag_sources      = var.mirror_vpc_tags
@@ -13,8 +13,7 @@ locals {
   collector_vpc_name        = var.vpc_name
   collector_vpc_subnet_cidr = [for subnet in var.subnets : subnet.collector_vpc_subnet_cidr]
   collector_vpc_subnets = {
-    for subnet in var.subnets :
-    "${subnet.collector_vpc_subnet_region}" => subnet
+    for subnet in var.subnets : subnet.collector_vpc_subnet_region => subnet
   }
   collector_subnet_ids = [for subnet in google_compute_subnetwork.main : subnet.id]
 

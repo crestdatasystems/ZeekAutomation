@@ -4,7 +4,12 @@
 
 terraform {
   required_version = ">= 0.14.5" # see https://releases.hashicorp.com/terraform/
-
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 3.55"
+    }
+  }
   backend "gcs" {}
 }
 
@@ -13,7 +18,6 @@ terraform {
 # -------------------------------------------------------------- #
 
 provider "google" {
-  version     = ">= 3.55"
   credentials = var.credentials
 }
 
@@ -50,7 +54,7 @@ module "google_zeek_automation" {
   }
   subnets = [
     {
-      mirror_vpc_subnet_cidr      = "10.138.0.0/20"
+      mirror_vpc_subnet_cidr      = ["10.138.0.0/20"]
       collector_vpc_subnet_cidr   = "10.20.0.0/24"
       collector_vpc_subnet_region = "us-west1"
     },
