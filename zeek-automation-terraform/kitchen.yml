@@ -1,0 +1,30 @@
+---
+driver:
+  name: "terraform"
+  command_timeout: 1800
+  verify_version: false
+
+provisioner:
+  name: "terraform"
+
+platforms:
+  - name: terraform
+
+suites:
+  - name: "zeek_project"
+    driver:
+      name: "terraform"
+      command_timeout: 1800
+      root_module_directory: test/fixtures/zeek_project/
+    verifier:
+      name: terraform
+      color: true
+      systems:
+        - name: inspec-gcp
+          backend: gcp
+          attrs:
+            - ./test/integration/zeek_project/attributes.yml
+          controls:
+            - gcp
+
+
