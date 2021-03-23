@@ -14,7 +14,7 @@ locals {
   collector_vpc_subnet_cidr = [for subnet in var.subnets : subnet.collector_vpc_subnet_cidr]
   collector_vpc_subnets = {
     for subnet in var.subnets :
-    "${subnet.collector_vpc_subnet_region}/${subnet.collector_vpc_subnet_cidr}" => subnet
+    "${subnet.collector_vpc_subnet_region}" => subnet
   }
   collector_subnet_ids = [for subnet in google_compute_subnetwork.main : subnet.id]
 
@@ -107,7 +107,7 @@ resource "google_compute_network_peering" "collector_vpc_network_peering" {
   export_custom_routes = var.export_peer_custom_routes
   import_custom_routes = var.export_local_custom_routes
 
-  depends_on = [google_compute_network_peering.mirror_vpc_network_peering]
+  depends_on = [google_compute_subnetwork.main, google_compute_network_peering.mirror_vpc_network_peering]
 }
 
 # -------------------------------------------------------------- #
