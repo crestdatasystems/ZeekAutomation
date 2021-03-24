@@ -20,12 +20,12 @@ module "google_zeek_automation" {
 
   subnets = [
     {
-      mirror_vpc_subnet_cidr      = "10.128.0.0/20"
+      mirror_vpc_subnet_cidr      = ["10.128.0.0/20"]
       collector_vpc_subnet_cidr   = "10.10.0.0/24"
       collector_vpc_subnet_region = "us-central1"
     },
     {
-      mirror_vpc_subnet_cidr      = "10.138.0.0/20"
+      mirror_vpc_subnet_cidr      = ["10.138.0.0/20"]
       collector_vpc_subnet_cidr   = "10.20.0.0/24"
       collector_vpc_subnet_region = "us-west1"
     },

@@ -5,6 +5,7 @@
 ### Pre-requisites:
 - [Packer](https://learn.hashicorp.com/tutorials/packer/getting-started-install)
 - [GCP service account with appropriate roles](#gcp-service-account-with-appropriate-roles)
+- GCP account should have a default VPC network.
 
 ---
 
