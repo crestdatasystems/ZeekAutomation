@@ -102,6 +102,12 @@ variable "template_description" {
   default     = "This instance template is used to create zeek-fluentd instances."
 }
 
+variable "golden_image" {
+  description = "This is name of zeek-fluentd packer image"
+  type        = string
+  default     = "zeekautomation/zeek-fluentd-golden-image-v1"
+}
+
 variable "machine_type" {
   description = "This is instance template machine type."
   type        = string

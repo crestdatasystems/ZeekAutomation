@@ -15,6 +15,7 @@ locals {
 module "google_zeek_automation" {
   source                = "../../../modules/zeek_automation"
   credentials           = "../../../credentials.json"
+  golden_image          = "your_project_id/packer_image_name"
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
 

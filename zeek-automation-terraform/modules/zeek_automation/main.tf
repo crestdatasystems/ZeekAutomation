@@ -131,7 +131,7 @@ resource "google_compute_instance_template" "main" {
   can_ip_forward = false
 
   disk {
-    source_image = "zeekautomation/zeek-fluentd-golden-image-v1"
+    source_image = var.golden_image
     auto_delete  = true
     boot         = true
   }
