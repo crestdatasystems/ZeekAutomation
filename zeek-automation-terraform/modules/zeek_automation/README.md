@@ -95,6 +95,7 @@ Then perform the following commands on the root folder:
 |------|-------------|------|---------|:--------:|
 | credentials | GCP credentials file | `string` | n/a | yes |
 | gcp\_project | GCP Project Id | `string` | n/a | yes |
+| golden\_image | This is name of zeek-fluentd packer image | `string` | `"zeekautomation/zeek-fluentd-golden-image-v1"` | no |
 | mirror\_vpc\_instances | Mirror VPC Instances list to be mirrored. | `map(list(string))` | `{}` | no |
 | mirror\_vpc\_network | Resource link of the network to add a peering to. | `string` | n/a | yes |
 | mirror\_vpc\_subnets | Mirror VPC Subnets list to be mirrored. | `map(list(string))` | `{}` | no |
