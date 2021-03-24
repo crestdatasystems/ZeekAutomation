@@ -15,7 +15,6 @@ locals {
 module "google_zeek_automation" {
   source                = "../../../modules/zeek_automation"
   credentials           = "../../../credentials.json"
-  golden_image          = "your_project_id/packer_image_name"
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
 
@@ -32,12 +31,11 @@ module "google_zeek_automation" {
     },
   ]
 
-  mirror_vpc_network = "projects/zeekautomation/global/networks/default"
+  mirror_vpc_network = "projects/<your_project_id>/global/networks/<your_network_id>"
 
   mirror_vpc_subnets = {
-    "us-central1" = ["projects/zeekautomation/regions/us-central1/subnetworks/default"]
-    "us-west1"    = ["projects/zeekautomation/regions/us-west1/subnetworks/default"]
-    "us-east1"    = ["projects/zeekautomation/regions/us-east1/subnetworks/default"]
+    "us-central1" = ["projects/<your_project_id>/regions/<your_region>/subnetworks/<your_subnetwork_id>"]
+    "us-west1"    = ["projects/<your_project_id>/regions/<your_region>/subnetworks/<your_subnetwork_id>"]
   }
 
 }
