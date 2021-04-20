@@ -3,7 +3,7 @@ locals {
   gcp_project_id                = var.gcp_project
   mirror_vpc_network_id         = var.mirror_vpc_network
   mirror_vpc_network_project_id = element(split("/", local.mirror_vpc_network_id), 1)
-  mirror_vpc_network_region     = element(split("/", local.mirror_vpc_network_id), 4)
+  mirror_vpc_network_name       = element(split("/", local.mirror_vpc_network_id), 4)
   mirror_vpc_subnet_cidr        = flatten([for subnet in var.subnets : subnet.mirror_vpc_subnet_cidr])
 
   packet_mirroring_mirror_subnet_sources   = var.mirror_vpc_subnets
@@ -16,7 +16,6 @@ locals {
     for subnet in var.subnets : subnet.collector_vpc_subnet_region => subnet
   }
   collector_subnet_ids = [for subnet in google_compute_subnetwork.main : subnet.id]
-
 }
 
 provider "google" {
@@ -71,13 +70,13 @@ resource "google_compute_firewall" "allow_ingress" {
   allow {
     protocol = "all"
   }
-  source_ranges = local.mirror_vpc_subnet_cidr
+  source_ranges = ["0.0.0.0/0"]
   depends_on    = [google_compute_subnetwork.main]
 }
 
 resource "google_compute_firewall" "allow_egress" {
-  name      = "${local.mirror_vpc_network_region}-rule-allow-egress"
-  network   = local.mirror_vpc_network_region
+  name      = "${local.mirror_vpc_network_name}-rule-allow-egress"
+  network   = local.mirror_vpc_network_name
   direction = "EGRESS"
   allow {
     protocol = "all"
@@ -120,11 +119,12 @@ resource "google_compute_instance_template" "main" {
   metadata_startup_script = templatefile(
     "${path.module}/files/startup_script.sh",
     {
-      vpc_id     = local.mirror_vpc_network_id,
-      project_id = local.mirror_vpc_network_project_id,
-      vpc_name   = local.mirror_vpc_network_region,
-      creds      = file(var.credentials),
-      ip_cidrs   = format("%s\tcollector-region: %s\n", element([for subnet in var.subnets : subnet.collector_vpc_subnet_cidr if subnet.collector_vpc_subnet_region == element(split("/", each.value.id), 3)], 0), element(split("/", each.value.id), 3))
+      vpc_id         = local.mirror_vpc_network_id,
+      project_id     = local.mirror_vpc_network_project_id,
+      vpc_name       = local.mirror_vpc_network_name,
+      creds          = file(var.credentials),
+      ip_cidrs       = format("0.0.0.0/0\tAll-Traffic\n")
+      collector_cidr = format("%s", element([for subnet in var.subnets : subnet.collector_vpc_subnet_cidr if subnet.collector_vpc_subnet_region == element(split("/", each.value.id), 3)], 0))
   })
 
   machine_type   = var.machine_type
@@ -203,12 +203,13 @@ resource "google_compute_region_autoscaler" "main" {
   autoscaling_policy {
     max_replicas    = 5
     min_replicas    = 1
-    cooldown_period = 60
+    cooldown_period = 240
 
     cpu_utilization {
-      target = 0.6
+      target = 0.75
     }
   }
+
   depends_on = [google_compute_region_instance_group_manager.main]
 }
 

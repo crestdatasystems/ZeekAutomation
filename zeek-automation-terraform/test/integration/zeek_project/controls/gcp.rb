@@ -1,6 +1,7 @@
-project_id   = attribute('project_id')
-network_name = attribute('network_name')
-region   = attribute('region')
+project_id      = attribute('project_id')
+network_name    = attribute('network_name')
+mirror_vpc_name = attribute('mirror_vpc_name')
+region          = attribute('region')
 
 control "gcp" do
   title "Google Cloud configuration"
@@ -22,7 +23,7 @@ control "gcp" do
   describe google_compute_firewalls(project: project_id) do
     its('firewall_names') { should include "#{network_name}-rule-allow-ingress" }
     its('firewall_names') { should include "#{network_name}-rule-allow-health-check" }
-    its('firewall_names') { should include "default-rule-allow-egress" }
+    its('firewall_names') { should include "#{mirror_vpc_name}-rule-allow-egress" }
   end
 
   describe google_compute_forwarding_rule(

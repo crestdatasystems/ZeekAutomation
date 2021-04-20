@@ -144,7 +144,7 @@ variable "mirror_vpc_instances" {
 variable "ip_protocols" {
   description = "Protocols that apply as a filter on mirrored traffic. Possible values: [\"tcp\", \"udp\", \"icmp\"]"
   type        = list(string)
-  default     = ["tcp"]
+  default     = []
 }
 
 variable "direction" {
@@ -156,6 +156,6 @@ variable "direction" {
 variable "cidr_ranges" {
   description = "IP CIDR ranges that apply as a filter on the source (ingress) or destination (egress) IP in the IP header. Only IPv4 is supported."
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  default     = []
 }
 

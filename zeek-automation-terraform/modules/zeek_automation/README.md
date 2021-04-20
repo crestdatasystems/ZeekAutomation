@@ -73,6 +73,7 @@ module "zeek_automation" {
 
 }
 ```
+**Note: For packet mirroring policy, it requires a mirror source to be specified before running the script. So, out of 3 variables: `mirror_vpc_instances` | `mirror_vpc_tags`| `mirror_vpc_subnets`, any one of them should be specified while running the terraform script.**
 
 Then perform the following commands on the root folder:
 - `terraform init -backend-config=backend.tfvars` to get the plugins

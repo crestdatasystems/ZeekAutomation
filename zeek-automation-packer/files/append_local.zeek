@@ -3,9 +3,6 @@
 # Produce JSON Streaming logs
 @load json-streaming-logs
 
-# add options for vpc id
-@load vpc
-
 # add custom fields
 @load add_fields
 

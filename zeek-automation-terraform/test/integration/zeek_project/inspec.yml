@@ -12,6 +12,9 @@ attributes:
   - name: network_name
     required: true
     type: string
+  - name: mirror_vpc_name
+    required: true
+    type: string
   - name: region
     required: true
     type: string

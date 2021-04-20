@@ -15,12 +15,10 @@ git clone --recursive https://github.com/zeek/zeek /usr/local/zeek
 
 /usr/local/zeek/configure --builddir=/usr/local/zeek/build && make -C /usr/local/zeek/build && make -C /usr/local/zeek/build install
 
-find /tmp/files/ -type f -print0 | xargs -0 dos2unix                              # for converting dos file format to unix file format
+find /tmp/files/ -type f -print0 | xargs -0 dos2unix                               # for converting dos file format to unix file format
 
 cp -f /tmp/files/json-streaming-logs.zeek /usr/local/zeek/share/zeek/site/
-cp -f /tmp/files/vpc.zeek /usr/local/zeek/share/zeek/site/
 cp -f /tmp/files/add_fields.zeek /usr/local/zeek/share/zeek/site/
-cp -f /tmp/files/vpc_config.dat /usr/local/zeek/share/zeek/site/
 
 cat /tmp/files/append_local.zeek >> /usr/local/zeek/share/zeek/site/local.zeek     # appending content
 

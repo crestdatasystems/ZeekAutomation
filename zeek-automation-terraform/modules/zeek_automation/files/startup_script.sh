@@ -2,14 +2,12 @@
 
 sudo userdel -r packer
 
-export MIRROR_VPC_ID=${vpc_id}
-export VPC_NAME=${vpc_name}
-export PROJECT_ID=${project_id}
-
 export INTERFACE_NAME=$(ip -br link | grep -v LOOPBACK | awk '{ print $1 }')
 
-echo "VpcModule::vpc_name "$VPC_NAME"" > /usr/local/zeek/share/zeek/site/vpc_config.dat
-echo "VpcModule::project_id "$PROJECT_ID"" >> /usr/local/zeek/share/zeek/site/vpc_config.dat
+sed -i 's/"vpc"/"${vpc_name}"/' /usr/local/zeek/share/zeek/site/add_fields.zeek
+sed -i 's/"project"/"${project_id}"/' /usr/local/zeek/share/zeek/site/add_fields.zeek
+
+echo -e '\n# Ignore collector subnets\nredef PacketFilter::default_capture_filter="(ip or not ip) and not (net ${collector_cidr})";\n' >> /usr/local/zeek/share/zeek/site/local.zeek
 
 sed -i '0,/interface=.*/s//interface='$INTERFACE_NAME'/' /usr/local/zeek/etc/node.cfg
 sed -i '0,/LogExpireInterval = .*/s//LogExpireInterval = 3day/' /usr/local/zeek/etc/zeekctl.cfg

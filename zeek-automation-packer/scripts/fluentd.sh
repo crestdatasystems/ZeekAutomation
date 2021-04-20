@@ -8,7 +8,7 @@
 curl -sSO https://dl.google.com/cloudagents/add-logging-agent-repo.sh
 bash add-logging-agent-repo.sh
 
-apt-get update      # necessary to update
+apt-get update              # necessary to update
 apt-get install -y google-fluentd google-fluentd-catch-all-config-structured
 
 service google-fluentd start
