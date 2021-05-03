@@ -1,33 +1,25 @@
-# -------------------------------------------------------------- #
-# TERRAFORM VERSION
-# -------------------------------------------------------------- #
+/**
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-terraform {
-  required_version = ">= 0.14.5" # see https://releases.hashicorp.com/terraform/
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 3.55"
-    }
-  }
-  backend "gcs" {}
-}
-
 # -------------------------------------------------------------- #
-# CONFIGURE OUR GCP CONNECTION
+# PROVIDER CONFIGURATION
 # -------------------------------------------------------------- #
 
 provider "google" {
   credentials = var.credentials
-}
-
-# -------------------------------------------------------------- #
-# FOR MAINTAINING .tfstate FILE REMOTELY
-# -------------------------------------------------------------- #
-
-resource "google_storage_bucket_acl" "store-acl" {
-  bucket         = var.bucket
-  predefined_acl = "publicReadWrite"
 }
 
 # -------------------------------------------------------------- #
@@ -45,30 +37,17 @@ locals {
 }
 
 module "google_zeek_automation" {
-  source                = "./modules/zeek_automation"
-  credentials           = var.credentials
+  source                = "<link>/google_zeek_automation"
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
-  mirror_vpc_network    = "projects/my-project-123/global/networks/test-mirror"
-  subnets = [
-    {
-      mirror_vpc_subnet_cidr      = ["10.138.0.0/20"]
-      collector_vpc_subnet_cidr   = "10.20.0.0/24"
-      collector_vpc_subnet_region = "us-west1"
-    },
-  ]
 
-
-  # Add mirror-vpc sources(any one): mirror_vpc_subnets | mirror_vpc_tags | mirror_vpc_instances
-  mirror_vpc_tags = {
-    "us-west1" = ["mirror-http", "mirror-http"]
-  }
+  credentials        = var.credentials
+  subnets            = var.subnets
+  mirror_vpc_network = var.mirror_vpc_network
+  mirror_vpc_subnets = var.mirror_vpc_subnets
 
   # Optional Parameters
-  ip_protocols = ["tcp"] # Protocols that apply as a filter on mirrored traffic. Possible values: ["tcp", "udp", "icmp"]
-
-  direction = "BOTH" # Direction of traffic to mirror. Possible values: "INGRESS", "EGRESS", "BOTH"
-
-  cidr_ranges = ["0.0.0.0/0", "192.168.0.1/24"] # "IP CIDR ranges that apply as a filter on the source (ingress) or destination (egress) IP in the IP header. Only IPv4 is supported."
-
+  ip_protocols = var.ip_protocols
+  direction    = var.direction
+  cidr_ranges  = var.cidr_ranges
 }

@@ -1,0 +1,22 @@
+---
+name: packet_mirroring_traffic_filtering
+title: Google Cloud configuration
+version: 0.1.0
+depends:
+  - name: inspec-gcp
+    git: https://github.com/inspec/inspec-gcp.git
+attributes:
+  - name: project_id
+    required: true
+    type: string
+  - name: network_name
+    required: true
+    type: string
+  - name: mirror_vpc_name
+    required: true
+    type: string
+  - name: region
+    required: true
+    type: string
+supports: 
+  - platform: gcp

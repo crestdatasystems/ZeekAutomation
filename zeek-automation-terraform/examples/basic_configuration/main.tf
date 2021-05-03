@@ -1,33 +1,25 @@
-# -------------------------------------------------------------- #
-# TERRAFORM VERSION
-# -------------------------------------------------------------- #
+/**
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-terraform {
-  required_version = ">= 0.14.5" # see https://releases.hashicorp.com/terraform/
-  required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = ">= 3.55"
-    }
-  }
-  backend "gcs" {}
-}
-
 # -------------------------------------------------------------- #
-# CONFIGURE OUR GCP CONNECTION
+# PROVIDER CONFIGURATION
 # -------------------------------------------------------------- #
 
 provider "google" {
   credentials = var.credentials
-}
-
-# -------------------------------------------------------------- #
-# FOR MAINTAINING .tfstate FILE REMOTELY
-# -------------------------------------------------------------- #
-
-resource "google_storage_bucket_acl" "store-acl" {
-  bucket         = var.bucket
-  predefined_acl = "publicReadWrite"
 }
 
 # -------------------------------------------------------------- #
@@ -45,22 +37,12 @@ locals {
 }
 
 module "google_zeek_automation" {
-  source                = "./modules/zeek_automation"
-  credentials           = var.credentials
+  source                = "<link>/google_zeek_automation"
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
-  mirror_vpc_network    = "projects/my-project-123/global/networks/test-mirror"
-  mirror_vpc_subnets = {
-    "us-west1" = ["projects/my-project-123/regions/us-west1/subnetworks/subnet-01"]
-  }
 
-  # Add subnets
-  subnets = [
-    {
-      mirror_vpc_subnet_cidr      = ["10.138.0.0/20"]
-      collector_vpc_subnet_cidr   = "10.20.0.0/24"
-      collector_vpc_subnet_region = "us-west1"
-    },
-  ]
-
+  credentials        = var.credentials
+  subnets            = var.subnets
+  mirror_vpc_network = var.mirror_vpc_network
+  mirror_vpc_subnets = var.mirror_vpc_subnets
 }
