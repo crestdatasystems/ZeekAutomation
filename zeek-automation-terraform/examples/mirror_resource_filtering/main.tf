@@ -41,7 +41,6 @@ module "google_zeek_automation" {
   gcp_project           = local.gcp_project_id
   service_account_email = data.google_client_openid_userinfo.main.email
 
-  credentials          = var.credentials
   subnets              = var.subnets
   mirror_vpc_network   = var.mirror_vpc_network
   mirror_vpc_subnets   = var.mirror_vpc_subnets

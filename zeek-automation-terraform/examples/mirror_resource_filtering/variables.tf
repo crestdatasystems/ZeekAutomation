@@ -18,13 +18,14 @@
 # BACKEND CONFIGURATION VARIABLES
 # -------------------------------------------------------------- #
 
-variable "bucket" {
-  description = "Name of the bucket to store .tfstate file remotely."
+variable "credentials" {
+  description = "Path to a service account credentials file with rights to run the Google Zeek Automation. If this file is absent Terraform will fall back to Application Default Credentials."
   type        = string
+  default     = ""
 }
 
-variable "credentials" {
-  description = "GCP credentials file"
+variable "bucket" {
+  description = "Name of the bucket to store .tfstate file remotely."
   type        = string
 }
 

@@ -139,8 +139,7 @@ resource "google_compute_instance_template" "main" {
       vpc_id         = local.mirror_vpc_network_id,
       project_id     = local.mirror_vpc_network_project_id,
       vpc_name       = local.mirror_vpc_network_name,
-      creds          = file(var.credentials),
-      ip_cidrs       = format("0.0.0.0/0\tAll-Traffic\n")
+      ip_cidrs       = format("0.0.0.0/0\tAll-Traffic\n"),
       collector_cidr = format("%s", element([for subnet in var.subnets : subnet.collector_vpc_subnet_cidr if subnet.collector_vpc_subnet_region == element(split("/", each.value.id), 3)], 0))
   })
 

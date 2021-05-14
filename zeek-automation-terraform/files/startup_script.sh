@@ -33,15 +33,7 @@ export PATH=/usr/local/zeek/bin:$PATH
 zeekctl install
 zeekctl deploy
 
-mkdir -p /etc/google/auth && touch /etc/google/auth/application_default_credentials.json
-echo '${creds}' > /etc/google/auth/application_default_credentials.json
-
-export GOOGLE_APPLICATION_CREDENTIALS="/etc/google/auth/application_default_credentials.json"
-sudo chown root:root "$GOOGLE_APPLICATION_CREDENTIALS"
-sudo chmod 0400 "$GOOGLE_APPLICATION_CREDENTIALS"
-
 systemctl restart google-fluentd
-
 
 if [ -f /etc/startup_script_completed ]; then
 exit 0

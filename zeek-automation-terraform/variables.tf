@@ -18,11 +18,6 @@
 # PROJECT variables
 # -------------------------------------------------------------- #
 
-variable "credentials" {
-  description = "GCP credentials file"
-  type        = string
-}
-
 variable "gcp_project" {
   description = "GCP Project Id"
   type        = string

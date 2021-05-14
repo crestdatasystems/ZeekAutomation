@@ -31,7 +31,7 @@ Examples of how to use these modules can be found in the [examples](examples) fo
     - mirror-vpc tags
     - mirror-vpc instances
   
-  with optional parameters like: ip_protocols, direction, & cidr_ranges.
+  with optional parametes like: ip_protocols, direction, & cidr_ranges.
 - Enables packaging of logs in order to send it to Chronicle Platform.  
 
 
@@ -89,7 +89,6 @@ In order to operate with the Service Account you must activate the following API
 ```tf
 module "google_zeek_automation" {
   source                = "<link>/google_zeek_automation"
-  credentials           = "path/to/credentials.json"
   gcp_project           = "project-123"
   service_account_email = "service-account@project-123.iam.gserviceaccount.com"
 
@@ -130,7 +129,6 @@ Then perform the following commands on the root folder:
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| credentials | GCP credentials file | `string` | n/a | yes |
 | gcp\_project | GCP Project Id | `string` | n/a | yes |
 | golden\_image | This is name of zeek-fluentd packer image | `string` | `"zeekautomation/zeek-fluentd-golden-image-v1"` | no |
 | mirror\_vpc\_instances | Mirror VPC Instances list to be mirrored. | `map(list(string))` | `{}` | no |
@@ -156,6 +154,41 @@ Then perform the following commands on the root folder:
 | loadbalancer\_ids | Internal Load Balancer identifier for the resource with format projects/{{project}}/regions/{{region}}/backendServices/{{name}} |
 | packet\_mirroring\_policy\_ids | Packet Mirroring Policy identifier for the resource with format projects/{{project}}/regions/{{region}}/packetMirrorings/{{name}} |
 
+#### Specifying credentials
+
+The Google Zeek Automation uses external scripts to perform a few tasks that are not implemented
+by Terraform providers. Because of this the Google Zeek Automation needs a copy of service account
+credentials to pass to these scripts. Credentials can be provided via two mechanisms:
+
+1. Explicitly passed to the Google Zeek Automation with the `credentials` variable. This approach
+   typically uses the same credentials for the `google` provider and the Google Zeek Automation:
+    ```terraform
+    provider "google" {
+      credentials = "${file(var.credentials)}"
+    }
+
+    module "google_zeek_automation" {
+      source = "<link>/google_zeek_automation"
+
+      # other variables follow ...
+    }
+    ```
+2. Implicitly provided by the [Application Default Credentials][application-default-credentials]
+   flow, which typically uses the `GOOGLE_APPLICATION_CREDENTIALS` environment variable:
+   ```terraform
+   # `GOOGLE_APPLICATION_CREDENTIALS` must be set in the environment before Terraform is run.
+   provider "google" {
+     # Terraform will check the `GOOGLE_APPLICATION_CREDENTIALS` variable, so no `credentials`
+     # value is needed here.
+   }
+
+   module "google_zeek_automation" {
+      source = "<link>/google_zeek_automation"
+
+      # Google Zeek Automation will also check the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
+      # other variables follow ...
+   }
+   ```
 
 ## Learn
 
@@ -175,7 +208,7 @@ Then perform the following commands on the root folder:
 
 This repo has the following folder structure:
 
-- [root](./): The root folder contains an [examples](./examples) directory which illustrates on how to deploy Google Zeek Automation module.
+- [root](./): The root folder contains an example directory which illustrates on how to deploy Google Zeek Automation module.
 
 - [examples](./examples): This folder contains examples of how to use the module.
 
@@ -196,3 +229,4 @@ Please see [contributing guidlines](CONTRIBUTING.md) for information on contribu
 
 [terraform-download]: https://www.terraform.io/downloads.html
 [terraform-provider-google]: https://github.com/terraform-providers/terraform-provider-google
+[application-default-credentials]: https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application

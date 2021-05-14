@@ -19,11 +19,12 @@
 # -------------------------------------------------------------- #
 
 terraform {
-  required_version = ">= 0.13.5"
+  required_version = ">= 0.13.5" # see https://releases.hashicorp.com/terraform/
   required_providers {
     google = {
       source  = "hashicorp/google"
       version = ">= 3.55"
     }
   }
+  //backend "gcs" {}
 }
