@@ -33,18 +33,28 @@ variable "bucket" {
 # MODULE VARIABLES
 # -------------------------------------------------------------- #
 
+variable "gcp_project_id" {
+  description = "GCP Project ID where collector vpc will be provisioned."
+  type        = string
+}
+
+variable "service_account_email" {
+  description = "User's Service Account Email."
+  type        = string
+}
+
+variable "collector_vpc_name" {
+  description = "This is name of collector vpc."
+  type        = string
+}
+
 variable "subnets" {
-  description = "The list of subnets being created"
+  description = "The list of subnets being created."
   type = list(object({
-    mirror_vpc_subnet_cidr      = list(string)
+    mirror_vpc_network          = string
     collector_vpc_subnet_cidr   = string
     collector_vpc_subnet_region = string
   }))
-}
-
-variable "mirror_vpc_network" {
-  description = "Resource link of the network to add a peering to."
-  type        = string
 }
 
 variable "mirror_vpc_subnets" {
@@ -60,7 +70,7 @@ variable "mirror_vpc_tags" {
 }
 
 variable "mirror_vpc_instances" {
-  description = "Mirror VPC Instances list to be mirrored."
+  description = "Mirror VPC Instances list to be mirrored. (Note: Mirror VPC should reside in the same project as collector VPC because cross project referencing of instances is not allowed by GCP)"
   type        = map(list(string))
   default     = {}
 }

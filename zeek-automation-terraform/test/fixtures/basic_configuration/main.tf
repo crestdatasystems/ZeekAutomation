@@ -15,11 +15,13 @@
  */
 
 module "basic_configuration" {
-  source      = "../../../examples/basic_configuration"
-  bucket      = var.bucket
-  credentials = var.credentials
+  source                = "../../../examples/basic_configuration"
+  bucket                = var.bucket
+  credentials           = var.credentials
+  gcp_project_id        = var.gcp_project_id
+  service_account_email = var.service_account_email
 
-  mirror_vpc_network = var.mirror_vpc_network
+  collector_vpc_name = var.collector_vpc_name
   subnets            = var.subnets
   mirror_vpc_subnets = var.mirror_vpc_subnets
 }

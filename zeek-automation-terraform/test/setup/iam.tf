@@ -20,7 +20,12 @@ locals {
     "roles/compute.admin",
     "roles/compute.networkAdmin",
     "roles/iam.serviceAccountUser",
-    "roles/compute.instanceAdmin",
+    "roles/storage.admin",
+    "roles/compute.packetMirroringUser",
+    "roles/compute.packetMirroringAdmin",
+    "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
+    "roles/iam.serviceAccountTokenCreator",
   ]
 }
 

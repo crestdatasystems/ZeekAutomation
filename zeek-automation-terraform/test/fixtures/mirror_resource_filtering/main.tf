@@ -15,12 +15,14 @@
  */
 
 module "mirror_resource_filtering" {
-  source      = "../../../examples/mirror_resource_filtering"
-  bucket      = var.bucket
-  credentials = var.credentials
+  source                = "../../../examples/mirror_resource_filtering"
+  bucket                = var.bucket
+  credentials           = var.credentials
+  gcp_project_id        = var.gcp_project_id
+  service_account_email = var.service_account_email
 
+  collector_vpc_name   = var.collector_vpc_name
   subnets              = var.subnets
-  mirror_vpc_network   = var.mirror_vpc_network
   mirror_vpc_subnets   = var.mirror_vpc_subnets
   mirror_vpc_instances = var.mirror_vpc_instances
   mirror_vpc_tags      = var.mirror_vpc_tags

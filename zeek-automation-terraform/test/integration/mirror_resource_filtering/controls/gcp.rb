@@ -28,7 +28,7 @@ control "gcp" do
 
   describe google_compute_subnetwork(
     project: project_id,
-    name: "subnet-01",
+    name: "#{network_name}-subnet-01",
     region: "#{region}"
   ) do
     it { should exist }
@@ -37,13 +37,12 @@ control "gcp" do
   describe google_compute_firewalls(project: project_id) do
     its('firewall_names') { should include "#{network_name}-rule-allow-ingress" }
     its('firewall_names') { should include "#{network_name}-rule-allow-health-check" }
-    its('firewall_names') { should include "#{mirror_vpc_name}-rule-allow-egress" }
   end
 
   describe google_compute_forwarding_rule(
     project: project_id, 
     region: region, 
-    name: "forwarding-rule--#{region}"
+    name: "#{network_name}-01"
     ) do
     its('load_balancing_scheme') { should match "INTERNAL" }
   end
@@ -51,7 +50,7 @@ control "gcp" do
   describe google_compute_health_check(
     project: project_id,
     region: region, 
-    name: "http-health-check"
+    name: "#{network_name}-http-health-check"
     ) do
       it { should exist }
     end
@@ -59,7 +58,7 @@ control "gcp" do
   describe google_compute_instance_template(
     project: project_id,
     region: region, 
-    name: "collector-it--#{region}"
+    name: "#{network_name}-01"
     ) do
       it { should exist }
     end
@@ -67,7 +66,7 @@ control "gcp" do
   describe google_compute_region_instance_group_manager(
     project: project_id,
     region: region, 
-    name: "collector-ig--#{region}"
+    name: "#{network_name}-01"
     ) do
       it { should exist }
     end

@@ -27,10 +27,9 @@ variable "gcp_project" {
 # VPC module variables
 # -------------------------------------------------------------- #
 
-variable "vpc_name" {
+variable "collector_vpc_name" {
   description = "Portion of name to be generated for the VPC network."
   type        = string
-  default     = "collector-vpc"
 }
 
 variable "vpc_description" {
@@ -71,22 +70,12 @@ variable "private_ip_google_access" {
 
 variable "subnets" {
   type = list(object({
-    mirror_vpc_subnet_cidr      = list(string)
+    mirror_vpc_network          = string
     collector_vpc_subnet_cidr   = string
     collector_vpc_subnet_region = string
   }))
   description = "The list of subnets being created"
 }
-
-# -------------------------------------------------------------- #
-# FIREWALL-RULE module variables
-# -------------------------------------------------------------- #
-
-variable "mirror_vpc_network" {
-  description = "Resource link of the network to add a peering to."
-  type        = string
-}
-
 # -------------------------------------------------------------- #
 # VPC-PEERING module variables
 # -------------------------------------------------------------- #
@@ -116,7 +105,7 @@ variable "template_description" {
 variable "golden_image" {
   description = "This is name of zeek-fluentd packer image"
   type        = string
-  default     = "zeek-fluentd-golden-image-v1"
+  default     = "projects/zeekautomation/global/images/zeek-fluentd-golden-image-v1"
 }
 
 variable "machine_type" {

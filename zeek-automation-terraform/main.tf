@@ -16,22 +16,27 @@
 
 
 locals {
-  gcp_project_id                = var.gcp_project
-  mirror_vpc_network_id         = var.mirror_vpc_network
-  mirror_vpc_network_project_id = element(split("/", local.mirror_vpc_network_id), 1)
-  mirror_vpc_network_name       = element(split("/", local.mirror_vpc_network_id), 4)
-  mirror_vpc_subnet_cidr        = flatten([for subnet in var.subnets : subnet.mirror_vpc_subnet_cidr])
+  gcp_project_id        = var.gcp_project
+  mirror_vpc_network_id = distinct([for subnet in var.subnets : subnet.mirror_vpc_network])
 
   packet_mirroring_mirror_subnet_sources   = var.mirror_vpc_subnets
   packet_mirroring_mirror_tag_sources      = var.mirror_vpc_tags
   packet_mirroring_mirror_instance_sources = var.mirror_vpc_instances
 
-  collector_vpc_name        = var.vpc_name
-  collector_vpc_subnet_cidr = [for subnet in var.subnets : subnet.collector_vpc_subnet_cidr]
+  collector_vpc_name = var.collector_vpc_name
   collector_vpc_subnets = {
-    for subnet in var.subnets : subnet.collector_vpc_subnet_region => subnet
+    for subnet in var.subnets : "${element(split("/", subnet.mirror_vpc_network), 1)}--${element(split("/", subnet.mirror_vpc_network), 4)}--${subnet.collector_vpc_subnet_region}" => subnet
   }
-  collector_subnet_ids = [for subnet in google_compute_subnetwork.main : subnet.id]
+
+  collector_vpc_subnets_cidrs = {
+    for subnet in var.subnets : "${element(split("/", subnet.mirror_vpc_network), 1)}--${element(split("/", subnet.mirror_vpc_network), 4)}--${subnet.collector_vpc_subnet_region}" => subnet.collector_vpc_subnet_cidr
+  }
+
+  subnet_key_count = [
+    for key in var.subnets : "${element(split("/", key.mirror_vpc_network), 1)}--${element(split("/", key.mirror_vpc_network), 4)}--${key.collector_vpc_subnet_region}"
+  ]
+
+  same_project_mirror_networks = [for network in local.mirror_vpc_network_id : network if element(split("/", network), 1) == local.gcp_project_id]
 }
 
 # -------------------------------------------------------------- #
@@ -51,7 +56,7 @@ resource "google_compute_network" "main" {
 
 resource "google_compute_subnetwork" "main" {
   for_each                 = local.collector_vpc_subnets
-  name                     = format("%s-%02d", "subnet", index(var.subnets, each.value) + 1)
+  name                     = format("%s-%s-%02d", local.collector_vpc_name, "subnet", index(var.subnets, each.value) + 1)
   project                  = local.gcp_project_id
   ip_cidr_range            = each.value.collector_vpc_subnet_cidr
   region                   = each.value.collector_vpc_subnet_region
@@ -90,14 +95,15 @@ resource "google_compute_firewall" "allow_ingress" {
 }
 
 resource "google_compute_firewall" "allow_egress" {
-  name      = "${local.mirror_vpc_network_name}-rule-allow-egress"
+  for_each  = toset(local.same_project_mirror_networks)
+  name      = "${element(split("/", each.value), 4)}-rule-allow-egress"
   project   = local.gcp_project_id
-  network   = local.mirror_vpc_network_name
+  network   = element(split("/", each.value), 4)
   direction = "EGRESS"
   allow {
     protocol = "all"
   }
-  destination_ranges = local.collector_vpc_subnet_cidr
+  destination_ranges = [for subnet in var.subnets : subnet.collector_vpc_subnet_cidr if subnet.mirror_vpc_network == each.value]
   depends_on         = [google_compute_subnetwork.main]
 }
 
@@ -106,22 +112,24 @@ resource "google_compute_firewall" "allow_egress" {
 # -------------------------------------------------------------- #
 
 resource "google_compute_network_peering" "mirror_vpc_network_peering" {
-  name                 = "network-peering-mirror-to-collector"
-  network              = local.mirror_vpc_network_id
+  for_each             = toset(local.same_project_mirror_networks)
+  name                 = format("%s-%s-%02d", "mirror-to-", local.collector_vpc_name, index(local.same_project_mirror_networks, each.key) + 1)
+  network              = each.value
   peer_network         = google_compute_network.main.id
   export_custom_routes = var.export_local_custom_routes
   import_custom_routes = var.export_peer_custom_routes
-  depends_on           = [google_compute_subnetwork.main]
+  depends_on           = [google_compute_subnetwork.main, google_compute_firewall.allow_egress]
 }
 
 resource "google_compute_network_peering" "collector_vpc_network_peering" {
-  name                 = "network-peering-collector-to-mirror"
+  for_each             = toset(local.mirror_vpc_network_id)
+  name                 = format("%s-%s-%02d", local.collector_vpc_name, "to-mirror", index(local.mirror_vpc_network_id, each.key) + 1)
   network              = google_compute_network.main.id
-  peer_network         = local.mirror_vpc_network_id
+  peer_network         = each.value
   export_custom_routes = var.export_peer_custom_routes
   import_custom_routes = var.export_local_custom_routes
 
-  depends_on = [google_compute_subnetwork.main, google_compute_network_peering.mirror_vpc_network_peering]
+  depends_on = [google_compute_subnetwork.main, google_compute_firewall.allow_egress, google_compute_network_peering.mirror_vpc_network_peering]
 }
 
 # -------------------------------------------------------------- #
@@ -129,18 +137,18 @@ resource "google_compute_network_peering" "collector_vpc_network_peering" {
 # -------------------------------------------------------------- #
 
 resource "google_compute_instance_template" "main" {
-  for_each    = google_compute_subnetwork.main
-  name        = format("%s--%s", "collector-it", element(split("/", each.value.id), 3))
+  for_each    = local.collector_vpc_subnets
+  name        = format("%s-%02d", local.collector_vpc_name, index(var.subnets, each.value) + 1)
   project     = local.gcp_project_id
   description = var.template_description
   metadata_startup_script = templatefile(
     "${path.module}/files/startup_script.sh",
     {
-      vpc_id         = local.mirror_vpc_network_id,
-      project_id     = local.mirror_vpc_network_project_id,
-      vpc_name       = local.mirror_vpc_network_name,
+      vpc_id         = each.value.mirror_vpc_network
+      project_id     = element(split("/", each.value.mirror_vpc_network), 1)
+      vpc_name       = element(split("/", each.value.mirror_vpc_network), 4)
       ip_cidrs       = format("0.0.0.0/0\tAll-Traffic\n"),
-      collector_cidr = format("%s", element([for subnet in var.subnets : subnet.collector_vpc_subnet_cidr if subnet.collector_vpc_subnet_region == element(split("/", each.value.id), 3)], 0))
+      collector_cidr = lookup(local.collector_vpc_subnets_cidrs, each.key)
   })
 
   machine_type   = var.machine_type
@@ -160,7 +168,7 @@ resource "google_compute_instance_template" "main" {
 
   network_interface {
     network    = google_compute_network.main.self_link
-    subnetwork = each.value.id
+    subnetwork = google_compute_subnetwork.main[each.key].id
   }
 
   depends_on = [google_compute_subnetwork.main, google_compute_network_peering.collector_vpc_network_peering]
@@ -171,7 +179,7 @@ resource "google_compute_instance_template" "main" {
 # -------------------------------------------------------------- #
 
 resource "google_compute_health_check" "main" {
-  name                = "http-health-check"
+  name                = "${local.collector_vpc_name}-http-health-check"
   project             = local.gcp_project_id
   description         = "Health check via http"
   timeout_sec         = 5
@@ -191,8 +199,8 @@ resource "google_compute_health_check" "main" {
 
 resource "google_compute_region_instance_group_manager" "main" {
   for_each           = google_compute_instance_template.main
-  name               = format("%s--%s", "collector-ig", element(split("--", element(split("/", each.value.id), 4)), 1))
-  region             = format("%s", element(split("--", element(split("/", each.value.id), 4)), 1))
+  name               = format("%s-%02d", local.collector_vpc_name, index(local.subnet_key_count, each.key) + 1)
+  region             = format("%s", element(split("--", each.key), 2))
   project            = local.gcp_project_id
   base_instance_name = "mig-instance"
 
@@ -214,7 +222,7 @@ resource "google_compute_region_instance_group_manager" "main" {
 
 resource "google_compute_region_autoscaler" "main" {
   for_each = google_compute_region_instance_group_manager.main
-  name     = format("%s--%s", "autoscaler", element(split("/", each.value.id), 3))
+  name     = format("%s-%02d", local.collector_vpc_name, index(local.subnet_key_count, each.key) + 1)
   project  = local.gcp_project_id
   region   = format("%s", element(split("/", each.value.id), 3))
   target   = each.value.id
@@ -238,7 +246,7 @@ resource "google_compute_region_autoscaler" "main" {
 
 resource "google_compute_region_backend_service" "main" {
   for_each              = google_compute_region_instance_group_manager.main
-  name                  = format("%s--%s", "internal-loadbalancer", element(split("--", element(split("/", each.value.instance_group), 10)), 1))
+  name                  = format("%s-%02d", local.collector_vpc_name, index(local.subnet_key_count, each.key) + 1)
   project               = local.gcp_project_id
   region                = format("%s", element(split("/", each.value.instance_group), 8))
   health_checks         = [google_compute_health_check.main.id]
@@ -257,7 +265,7 @@ resource "google_compute_region_backend_service" "main" {
 
 resource "google_compute_forwarding_rule" "main" {
   for_each               = google_compute_region_backend_service.main
-  name                   = format("%s--%s", "forwarding-rule", element(split("/", each.value.id), 3))
+  name                   = format("%s-%02d", local.collector_vpc_name, index(local.subnet_key_count, each.key) + 1)
   project                = local.gcp_project_id
   region                 = format("%s", element(split("/", each.value.id), 3))
   load_balancing_scheme  = "INTERNAL"
@@ -266,7 +274,7 @@ resource "google_compute_forwarding_rule" "main" {
   allow_global_access    = false
   is_mirroring_collector = true
   network                = google_compute_network.main.self_link
-  subnetwork             = format("%s", element([for subnet in local.collector_subnet_ids : subnet if element(split("/", subnet), 3) == element(split("/", each.value.id), 3)], 0))
+  subnetwork             = google_compute_subnetwork.main[each.key].id
   depends_on             = [google_compute_region_backend_service.main]
 }
 
@@ -275,31 +283,31 @@ resource "google_compute_forwarding_rule" "main" {
 # -------------------------------------------------------------- #
 
 resource "google_compute_packet_mirroring" "main" {
-  for_each = google_compute_forwarding_rule.main
-  name     = format("%s--%s", "policy-mirror-to-collector", element(split("/", each.value.id), 3))
+  for_each = local.collector_vpc_subnets
+  name     = format("%s-%02d", local.collector_vpc_name, index(local.subnet_key_count, each.key) + 1)
   project  = local.gcp_project_id
-  region   = format("%s", element(split("/", each.value.id), 3))
+  region   = each.value.collector_vpc_subnet_region
 
   network {
-    url = local.mirror_vpc_network_id
+    url = each.value.mirror_vpc_network
   }
 
   collector_ilb {
-    url = each.value.id
+    url = google_compute_forwarding_rule.main[each.key].id
   }
 
   mirrored_resources {
     dynamic "subnetworks" {
-      for_each = lookup(local.packet_mirroring_mirror_subnet_sources, format("%s", element(split("/", each.value.id), 3)), [])
+      for_each = lookup(local.packet_mirroring_mirror_subnet_sources, each.key, [])
       content {
         url = subnetworks.value
       }
     }
 
-    tags = lookup(local.packet_mirroring_mirror_tag_sources, format("%s", element(split("/", each.value.id), 3)), [])
+    tags = lookup(local.packet_mirroring_mirror_tag_sources, each.key, [])
 
     dynamic "instances" {
-      for_each = lookup(local.packet_mirroring_mirror_instance_sources, format("%s", element(split("/", each.value.id), 3)), [])
+      for_each = lookup(local.packet_mirroring_mirror_instance_sources, each.key, [])
       content {
         url = instances.value
       }

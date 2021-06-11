@@ -43,10 +43,12 @@ module "project_ci_vm" {
 
   activate_apis = [
     "cloudresourcemanager.googleapis.com",
-    "storage-api.googleapis.com",
+    "storage.googleapis.com",
     "serviceusage.googleapis.com",
     "compute.googleapis.com",
+    "monitoring.googleapis.com",
     "iam.googleapis.com",
+    "logging.googleapis.com",
     "cloudbilling.googleapis.com",
   ]
 }
