@@ -14,7 +14,6 @@
 
 project_id      = attribute('project_id')
 network_name    = attribute('network_name')
-mirror_vpc_name = attribute('mirror_vpc_name')
 region          = attribute('region')
 
 control "gcp" do

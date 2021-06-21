@@ -66,5 +66,18 @@ suites:
           backend: gcp
           controls:
             - gcp
-
+  
+  - name: "multiple_vpc_support"
+    driver:
+      name: "terraform"
+      command_timeout: 1800
+      root_module_directory: test/fixtures/multiple_vpc_support/
+    verifier:
+      name: terraform
+      color: true
+      systems:
+        - name: inspec-gcp
+          backend: gcp
+          controls:
+            - gcp
 

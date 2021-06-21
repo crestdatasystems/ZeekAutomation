@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 
-# -------------------------------------------------------------- #
-# PROVIDER CONFIGURATION
-# -------------------------------------------------------------- #
-
-provider "google" {
-  credentials = var.credentials
-}
-
-# -------------------------------------------------------------- #
-# MODULE CONFIGURATIONS
-# -------------------------------------------------------------- #
-
-module "google_zeek_automation" {
-  source                = "<link>/google_zeek_automation"
-  gcp_project           = var.gcp_project_id
+module "multiple_vpc_support" {
+  source                = "../../../examples/multiple_vpc_support"
+  bucket                = var.bucket
+  credentials           = var.credentials
+  gcp_project_id        = var.gcp_project_id
   service_account_email = var.service_account_email
 
-  collector_vpc_name = var.collector_vpc_name
-  subnets            = var.subnets
-  mirror_vpc_subnets = var.mirror_vpc_subnets
+  collector_vpc_name   = var.collector_vpc_name
+  subnets              = var.subnets
+  mirror_vpc_subnets   = var.mirror_vpc_subnets
+  mirror_vpc_instances = var.mirror_vpc_instances
+  mirror_vpc_tags      = var.mirror_vpc_tags
 
   # Optional Parameters
   ip_protocols = var.ip_protocols

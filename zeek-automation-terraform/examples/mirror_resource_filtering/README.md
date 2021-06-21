@@ -62,6 +62,7 @@ Above variables can be set either by specifying it through [Environment Variable
 | gcp_project_id | GCP Project ID where collector vpc will be provisioned. | `string` | n/a | yes |
 | service_account_email | User's Service Account Email. | `string` | n/a | yes |
 | collector_vpc_name | This is name of collector vpc. | `string` | n/a | yes |
+| subnets | The list of subnets being created | <pre>list(object({<br>    mirror_vpc_network      = string<br>    collector_vpc_subnet_cidr   = string<br>    collector_vpc_subnet_region = string<br>  }))</pre> | n/a | yes |
 | cidr\_ranges | IP CIDR ranges that apply as a filter on the source (ingress) or destination (egress) IP in the IP header. Only IPv4 is supported. | `list(string)` | `[]` | no |
 | credentials | Path to a service account credentials file with rights to run the Google Zeek Automation. If this file is absent Terraform will fall back to Application Default Credentials. | `string` | `""` | no |
 | direction | Direction of traffic to mirror. Default value: "BOTH" Possible values: ["INGRESS", "EGRESS", "BOTH"] | `string` | `"BOTH"` | no |
@@ -69,7 +70,6 @@ Above variables can be set either by specifying it through [Environment Variable
 | mirror\_vpc\_instances | Mirror VPC Instances list to be mirrored. <br> <br>**(Note: Mirror VPC should reside in the same project as collector VPC because cross project referencing of instances is not allowed by GCP)**  | `map(list(string))` | `{}` | no |
 | mirror\_vpc\_subnets | Mirror VPC Subnets list to be mirrored. | `map(list(string))` | `{}` | no |
 | mirror\_vpc\_tags | Mirror VPC Tags list to be mirrored. | `map(list(string))` | `{}` | no |
-| subnets | The list of subnets being created | <pre>list(object({<br>    mirror_vpc_network      = string<br>    collector_vpc_subnet_cidr   = string<br>    collector_vpc_subnet_region = string<br>  }))</pre> | n/a | yes |
 
 ## Outputs
 

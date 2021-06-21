@@ -15,28 +15,15 @@
  */
 
 # -------------------------------------------------------------- #
-# PROVIDER CONFIGURATION
+# TERRAFORM VERSION
 # -------------------------------------------------------------- #
 
-provider "google" {
-  credentials = var.credentials
-}
-
-# -------------------------------------------------------------- #
-# MODULE CONFIGURATIONS
-# -------------------------------------------------------------- #
-
-module "google_zeek_automation" {
-  source                = "<link>/google_zeek_automation"
-  gcp_project           = var.gcp_project_id
-  service_account_email = var.service_account_email
-
-  collector_vpc_name = var.collector_vpc_name
-  subnets            = var.subnets
-  mirror_vpc_subnets = var.mirror_vpc_subnets
-
-  # Optional Parameters
-  ip_protocols = var.ip_protocols
-  direction    = var.direction
-  cidr_ranges  = var.cidr_ranges
+terraform {
+  required_version = ">= 0.13.5" # see https://releases.hashicorp.com/terraform/
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 3.55"
+    }
+  }
 }
